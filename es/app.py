@@ -72,3 +72,6 @@ def trade(keyword: Optional[str] = None, page: Optional[int] = 1, start: Optiona
         for trade_obj in trade_detail["hits"]["hits"]:
             trade_ouput.append(trade_obj["_source"])
     return trade_ouput
+
+
+#  https://github.com/gaurav-ml1/fastapi-elasticsearch-docker/tree/main
