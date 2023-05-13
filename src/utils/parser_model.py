@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from pydantic import BaseModel, validator
 from config.logger import logging
+from pydantic import BaseModel, validator
 
 logger = logging.getLogger(__name__)
 

@@ -1,45 +1,26 @@
 import uvicorn
-from elasticsearch import AsyncElasticsearch
 from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from fastapi.responses import ORJSONResponse
 
-from api.v1.search import router
+from api import base
 from core.config import app_settings
-from db import db, es
+
 
 app = FastAPI(
-    title='Text Search',
-    description='The service get text query and searches it for the text of the document in the index',
-    version='1.0.0',
+    title=app_settings.project_name,
+    description=app_settings.project_description,
+    version=app_settings.project_version,
     docs_url='/api/openapi',
-    openapi_url='/api/openapi.json'
+    openapi_url='/api/openapi.json',
+    default_response_class=ORJSONResponse,
 )
 
+app.include_router(base.api_router)
 
-@app.on_event('startup')
-async def startup():
-    es.es = AsyncElasticsearch(hosts=[app_settings.elastic_host])
-    engine = create_async_engine(
-        app_settings.database_dsn,
-        future=True,
-        echo=True
-    )
-    db.async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-
-
-@app.on_event('shutdown')
-async def shutdown():
-    await db.es.close()
-    await db.async_session.close()
-
-
-app.include_router(router, prefix='/api/v1')
 
 if __name__ == '__main__':
     uvicorn.run(
         'main:app',
-        host='0.0.0.0',
-        port=8000,
-        reload=True
+        host=app_settings.project_host,
+        port=app_settings.project_port,
     )

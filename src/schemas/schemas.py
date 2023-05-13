@@ -1,12 +1,34 @@
+from datetime import datetime
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
-class SearchSchema(BaseModel):
-    query: str
+class PostBase(BaseModel):
+    text: str
 
-    @property
-    def search_query(self):
-        return {'query':
-                    {'query_string':
-                         {'query': self.query}},
-                'size': 10, 'from': 0, 'sort': []}
+
+class PostCreate(PostBase):
+    pass
+
+
+class PostUpdate(PostBase):
+    pass
+
+
+class PostInDBBase(PostBase):
+    id: UUID
+    text: str
+    created_date: datetime
+    rubrics: list[str]
+
+    class Config:
+        orm_mode = True
+
+
+class Post(PostInDBBase):
+    pass
+
+
+class PostInDB(PostInDBBase):
+    pass

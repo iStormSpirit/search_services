@@ -5,3 +5,5 @@ LOGGING = {
     "datefmt": "%Y-%m-%d %H:%M:%S",
     "level": logging.INFO
 }
+
+logging.basicConfig(**LOGGING)

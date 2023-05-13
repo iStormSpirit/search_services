@@ -1,54 +1,59 @@
-from elasticsearch import AsyncElasticsearch
-from fastapi import Depends
-from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
+from sqlalchemy import text
+from fastapi import Depends
 
 from core.config import app_settings, logging
-from db.common import DBObjectService
-from db.db import get_db_session
-from db.es import get_elastic
 from models.post import PostModel
-from schemas.schemas import SearchSchema
+from db.db import get_db_session
+
+# from .common import DBObjectService
+# from db.es import get_elastic
+# from schemas.schemas import SearchSchema
+from typing import Any, Generic, Type, TypeVar, List
+from db.db import Base
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+ModelType = TypeVar('ModelType', bound=Base)
+CreateSchemaType = TypeVar('CreateSchemaType', bound=BaseModel)
+UpdateSchemaType = TypeVar('UpdateSchemaType', bound=BaseModel)
 
 
-class PostService(DBObjectService):
-    async def _find_posts_ids(self, query: str) -> list[str]:
-        body = SearchSchema(query=query)
-        resp = await self.es_session.search(
-            index=app_settings.index,
-            body=body.search_query,
-            size=app_settings.resp_size,
-        )
-        ids = [p['_source']['id'] for p in resp['hits']['hits']]
-        return ids
+class BaseABCServices:
 
-    async def search_posts(self, query: str) -> list[PostModel]:
-        ids = await self._find_posts_ids(query)
-        result = await self.db_session.execute(
-            select(PostModel).where(PostModel.id.in_(ids)).order_by(PostModel.created_date.desc())
-        )
-        return result.all()
+    def get(self, *args, **kwargs):
+        raise NotImplementedError
 
-    async def delete_post(self, post_id: str) -> bool:
-        try:
-            await self.db_session.execute(
-                delete(PostModel).where(PostModel.id == post_id)
-            )
-            await self.es_session.delete_by_query(
-                index=app_settings.index,
-                body={'query': {'match': {'id': post_id}}}
-            )
-            await self.db_session.commit()
-        except Exception as ex:
-            logger.error(ex)
-            return False
-        return True
+    def create(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def update(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def delete(self, *args, **kwargs):
+        raise NotImplementedError
 
 
-def get_post_service(
-        db_session: AsyncSession = Depends(get_db_session),
-        es_session: AsyncElasticsearch = Depends(get_elastic)
-) -> PostService:
-    return PostService(db_session, es_session)
+class PostService(BaseABCServices, Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    def __init__(self, model: Type[ModelType]):
+        self._model = model
+
+    async def get_multi(self, db: AsyncSession, *, skip=0, limit=100):
+        statement = select(self._model).offset(skip).limit(limit)
+        results = await db.execute(statement=statement)
+        return results.scalars().all()
+
+    async def get_by_id(self, db: AsyncSession, post_id):
+        statement = select(self._model).where(self._model.id == post_id)
+        results = await db.execute(statement=statement)
+        return results.scalar_one_or_none()
+
+    async def create(self, *args, **kwargs):
+        pass
+
+    async def update(self, *args, **kwargs):
+        pass
+
+    async def delete(self, *args, **kwargs):
+        pass
