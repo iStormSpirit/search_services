@@ -14,9 +14,9 @@ class AppSettings(BaseSettings):
     project_version: str
     project_host: str
     project_port: int
-    # el_host: str
-    # index: str
-    # resp_size: int
+    # es_host: str
+    # es_index: str
+    # es_resp_size: int
 
     class Config:
         env_file = '.env'
