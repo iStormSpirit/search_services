@@ -1,5 +1,5 @@
 import logging
-
+import os
 from pydantic import BaseSettings, PostgresDsn
 
 from .logger import LOGGING
@@ -8,7 +8,6 @@ logging.basicConfig(**LOGGING)
 
 
 class AppSettings(BaseSettings):
-    # pass
     database_dsn: PostgresDsn
     project_name: str
     project_description: str
@@ -24,6 +23,4 @@ class AppSettings(BaseSettings):
 
 
 app_settings = AppSettings()
-import os
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

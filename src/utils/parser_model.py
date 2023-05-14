@@ -1,17 +1,10 @@
 from datetime import datetime
 
-from config.logger import logging
 from pydantic import BaseModel, validator
 
-logger = logging.getLogger(__name__)
 
-
-class PostModelBase(BaseModel):
-    id: str | None
+class PostModelFull(BaseModel):
     text: str
-
-
-class PostModelFull(PostModelBase):
     created_date: datetime
     rubrics: list
 
@@ -23,7 +16,8 @@ class PostModelFull(PostModelBase):
         try:
             return str(value)
         except Exception as ex:
-            logger.error(f'text convert error: {ex}')
+            pass
+            # logger.error(f'text convert error: {ex}')
 
     @validator('created_date', pre=True)
     def convert_date(cls, value) -> datetime:
@@ -34,7 +28,8 @@ class PostModelFull(PostModelBase):
             datetime_obj = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
             return datetime_obj
         except Exception as ex:
-            logger.error(f'datetime_obj error: {ex}')
+            pass
+            # logger.error(f'datetime_obj error: {ex}')
 
     @validator('rubrics', pre=True)
     def convert_rubrics(cls, value) -> list:
@@ -46,7 +41,8 @@ class PostModelFull(PostModelBase):
             rubrics_lst = [elem[1:-1] for elem in value_clr]
             return rubrics_lst
         except Exception as ex:
-            logger.error(f'rubrics error: {ex}')
+            pass
+            # logger.error(f'rubrics error: {ex}')
 
     @staticmethod
     def parse_csv_to_dict(value) -> dict:
