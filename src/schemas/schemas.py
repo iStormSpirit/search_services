@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class PostBase(BaseModel):
     text: str
+    rubrics: list[str]
 
 
 class PostCreate(PostBase):
@@ -18,17 +19,11 @@ class PostUpdate(PostBase):
 
 class PostInDBBase(PostBase):
     id: UUID
-    text: str
     created_date: datetime
-    rubrics: list[str]
 
     class Config:
         orm_mode = True
 
 
 class Post(PostInDBBase):
-    pass
-
-
-class PostInDB(PostInDBBase):
     pass

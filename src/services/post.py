@@ -1,18 +1,12 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
-from sqlalchemy import text
-from fastapi import Depends
+from typing import Generic, Type, TypeVar
 
-from core.config import app_settings, logging
-from models.post import PostModel
-from db.db import get_db_session
-
-# from .common import DBObjectService
-# from db.es import get_elastic
-# from schemas.schemas import SearchSchema
-from typing import Any, Generic, Type, TypeVar, List
-from db.db import Base
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.config import logging
+from db.db import Base
 
 logger = logging.getLogger(__name__)
 ModelType = TypeVar('ModelType', bound=Base)
@@ -49,11 +43,23 @@ class PostService(BaseABCServices, Generic[ModelType, CreateSchemaType, UpdateSc
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
 
-    async def create(self, *args, **kwargs):
-        pass
+    async def create(self, db: AsyncSession, data: CreateSchemaType):
+        obj_in_data = jsonable_encoder(data)
+        db_obj = self._model(**obj_in_data)
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
 
     async def update(self, *args, **kwargs):
         pass
 
-    async def delete(self, *args, **kwargs):
-        pass
+    async def delete(self, db: AsyncSession, post_id):
+        db_obj = await self.get_by_id(db=db, post_id=post_id)
+        if not db_obj:
+            logger.info(f'not found post with id {post_id}')
+            return None
+        await db.delete(db_obj)
+        await db.commit()
+        logger.info(f'deleted post by id {post_id}')
+        return db_obj

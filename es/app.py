@@ -1,6 +1,7 @@
 from typing import Optional
-from fastapi import FastAPI
+
 from app.es_connector import ES_connector
+from fastapi import FastAPI
 
 app = FastAPI()
 

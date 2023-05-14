@@ -1,5 +1,6 @@
 from models.post import PostModel
-from schemas.schemas import Post, PostCreate, PostUpdate
+from schemas.schemas import PostCreate, PostUpdate
+
 from .post import PostService
 
 
